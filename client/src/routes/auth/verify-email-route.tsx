@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/card";
 import React from "react";
 
-const VerifyEmailRoute = () => {
+interface VerifyEmailRouteProps {
+  userId: string;
+}
+
+const VerifyEmailRoute = ({userId}: VerifyEmailRouteProps) => {
   return (
     <div className={"flex items-center justify-center min-h-screen"}>
       <Container>
@@ -25,10 +29,10 @@ const VerifyEmailRoute = () => {
           </CardHeader>
           <CardContent className={"space-y-4"}>
             {/* Verify Email Form */}
-            <VerifyEmailForm />
+            <VerifyEmailForm userId={userId} />
 
             {/* Resend Email Verification */}
-            <ResendEmailVerification />
+            <ResendEmailVerification userId={userId} />
           </CardContent>
         </Card>
       </Container>

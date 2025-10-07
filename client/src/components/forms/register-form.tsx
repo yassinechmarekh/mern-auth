@@ -18,6 +18,9 @@ import Link from "next/link";
 import { PasswordInput } from "../ui/password-input";
 import { Button } from "../ui/button";
 import { registerFormSchema } from "@/lib/schemas/auth.schema";
+import { registerAction } from "@/actions/auth.action";
+import { ActionResponseType } from "../../../types";
+import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
   const form = useForm<z.infer<typeof registerFormSchema>>({
@@ -32,9 +35,22 @@ const RegisterForm = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const registerHandler = (data: z.infer<typeof registerFormSchema>) => {
+  const router = useRouter();
+
+  const registerHandler = async (data: z.infer<typeof registerFormSchema>) => {
     try {
       setIsLoading(true);
+
+      const result: ActionResponseType = await registerAction(data);
+
+      if (result.success) {
+        toast.success(result.message);
+        if (result.redirectTo) {
+          router.replace(result.redirectTo);
+        }
+      } else {
+        toast.error(result.message);
+      }
       console.log(data);
     } catch (error) {
       console.log("Register Hanlder Error:");

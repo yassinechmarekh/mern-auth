@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import {
-    Form,
+  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -16,8 +16,16 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { verifyEmailFormSchema } from "@/lib/schemas/auth.schema";
 import { Button } from "../ui/button";
+import { verifyEmailAction } from "@/actions/auth.action";
+import { useRouter } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Terminal } from "lucide-react";
 
-const VerifyEmailForm = () => {
+interface VerifyEmailFormProps {
+  userId: string;
+}
+
+const VerifyEmailForm = ({ userId }: VerifyEmailFormProps) => {
   const form = useForm<z.infer<typeof verifyEmailFormSchema>>({
     resolver: zodResolver(verifyEmailFormSchema),
     defaultValues: {
@@ -26,11 +34,31 @@ const VerifyEmailForm = () => {
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const verifyEmailHandler = (data: z.infer<typeof verifyEmailFormSchema>) => {
+  const router = useRouter();
+
+  const clearError = () => {
+    setError(null);
+  };
+
+  const verifyEmailHandler = async (
+    data: z.infer<typeof verifyEmailFormSchema>
+  ) => {
     try {
       setIsLoading(true);
-      console.log(data);
+      const result = await verifyEmailAction(data, userId);
+
+      if (!result.success) {
+        setError(result.message);
+        return;
+      } else {
+        clearError();
+        if (result.redirectTo) {
+          router.replace(result.redirectTo);
+        }
+        toast.success(result.message);
+      }
     } catch (error) {
       console.log("Verify Email Hanlder Error:");
       console.log(error);
@@ -48,6 +76,14 @@ const VerifyEmailForm = () => {
         onSubmit={form.handleSubmit(verifyEmailHandler)}
         className="space-y-4"
       >
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 w-full">
+            <div className="flex items-center">
+              <AlertCircle className="size-4 text-red-600 mr-2" />
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+          </div>
+        )}
         <FormField
           control={form.control}
           name="codeOTP"
