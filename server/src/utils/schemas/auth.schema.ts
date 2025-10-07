@@ -15,3 +15,7 @@ export const registerSchema = z
 export const verifyEmailSchema = z.object({
   codeOTP: z.number().min(100000).max(999999),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().nonempty().email(),
+});

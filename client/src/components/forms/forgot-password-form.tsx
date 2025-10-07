@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Form,
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import z from "zod";
 import { forgotPasswordFormSchema } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { forgotPasswordAction } from "@/actions/auth.action";
+import { useRouter } from "next/navigation";
 
 const ForgotPasswordForm = () => {
   const form = useForm<z.infer<typeof forgotPasswordFormSchema>>({
@@ -25,15 +27,37 @@ const ForgotPasswordForm = () => {
     },
   });
 
-  const forgotPasswordHandler = (data: z.infer<typeof forgotPasswordFormSchema>) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const router = useRouter();
+
+  const forgotPasswordHandler = async (
+    data: z.infer<typeof forgotPasswordFormSchema>
+  ) => {
     try {
-      console.log(data);
+      setIsLoading(true);
+      const result = await forgotPasswordAction(data);
+
+      if (!result.success) {
+        if (result.redirectTo) {
+          router.push(result.redirectTo);
+          toast.warning(result.message);
+          return;
+        } else {
+          toast.error(result.message);
+          return;
+        }
+      }
+
+      toast.success(result.message);
     } catch (error) {
       console.log("Forgot Password Handler:");
       console.log(error);
       toast.error("Internal server error", {
         description: "Something went wrong. Please try again.",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,8 +88,14 @@ const ForgotPasswordForm = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full">
-            Send Reset Link
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={
+              isLoading || Object.keys(form.formState.errors).length > 0
+            }
+          >
+            {isLoading ? "Loading..." : "Send Reset Link"}
           </Button>
         </div>
       </form>

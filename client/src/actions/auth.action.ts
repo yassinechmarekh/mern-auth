@@ -2,11 +2,12 @@
 
 import z from "zod";
 import {
+  forgotPasswordFormSchema,
   registerFormSchema,
   verifyEmailFormSchema,
 } from "@/lib/schemas/auth.schema";
 import api from "@/lib/axios";
-import { AuthPages, Routes } from "@/lib/constants";
+import { AuthPages, HttpStatusCode, Routes } from "@/lib/constants";
 import { ActionResponseType } from "../../types";
 
 export const registerAction = async (
@@ -89,6 +90,43 @@ export const resendEmailVerificationAction = async (
     return {
       success: false,
       message: "Something went wrong. Please try again.",
+    };
+  }
+};
+
+export const forgotPasswordAction = async (
+  data: z.infer<typeof forgotPasswordFormSchema>
+): Promise<ActionResponseType> => {
+  try {
+    const response = await api.post(`/auth/forgot-password`, data);
+
+    if (response.status !== HttpStatusCode.OK) {
+      if (
+        response.status === HttpStatusCode.FORBIDDEN &&
+        response.data.userId
+      ) {
+        return {
+          success: false,
+          message: response.data.message,
+          redirectTo: `/${Routes.AUTH}/${AuthPages.VERIFY_EMAIL}/${response.data.userId}`,
+        };
+      }
+      return {
+        success: false,
+        message: response.data.message,
+      };
+    }
+
+    return {
+      success: true,
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.log("Forgot Password Action Error :");
+    console.log(error);
+    return {
+      success: false,
+      message: "Something sent wrong. Please try again.",
     };
   }
 };

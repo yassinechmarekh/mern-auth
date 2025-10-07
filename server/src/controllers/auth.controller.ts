@@ -3,7 +3,7 @@ import User, { IUser } from "../models/User.model";
 import { HttpStatusCode } from "../utils/constant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { sendEmailVerification } from "../utils/mail";
+import { sendEmailVerification, sendResetPasswordEmail } from "../utils/mail";
 import { Types } from "mongoose";
 import {
   getUserByIdService,
@@ -134,6 +134,53 @@ export const resendEmailVerificationController = async (
       .json({ message: "We send a new OTP. Please verify your email." });
   } catch (error) {
     console.log("Resend Email Verification Error :");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Forgot password
+ * @route /api/auth/forgot-password
+ * @method POST
+ * @access public  
+ -----------------------------------------*/
+export const forgotPasswordController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "You have not an account in our platform.",
+      });
+      return;
+    }
+
+    if (!user.isVerified) {
+      await sendEmailVerification(user._id as Types.ObjectId);
+
+      res.status(HttpStatusCode.FORBIDDEN).json({
+        message:
+          "You must first verify your email. We send a verification email, check your inbox.",
+        userId: user._id,
+      });
+      return;
+    }
+
+    await sendResetPasswordEmail(user._id as Types.ObjectId);
+
+    res.status(HttpStatusCode.OK).json({
+      message:
+        "We sent a email to reset your password. Please check your inbox.",
+    });
+  } catch (error) {
+    console.log("Forgot Password Controller Error:");
     console.log(error);
     next(error);
   }

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  forgotPasswordController,
   registerController,
   resendEmailVerificationController,
   verifyEmailControler,
@@ -9,6 +10,7 @@ import {
   validateObjectId,
 } from "../middlewares/validation.middleware";
 import {
+  forgotPasswordSchema,
   registerSchema,
   verifyEmailSchema,
 } from "../utils/schemas/auth.schema";
@@ -33,5 +35,10 @@ router
 router
   .route("/resend-otp/:userId")
   .get(validateObjectId("userId"), resendEmailVerificationController);
+
+// ~/api/auth/forgot-password
+router
+  .route("/forgot-password")
+  .post(validateBody(forgotPasswordSchema), forgotPasswordController);
 
 export default router;

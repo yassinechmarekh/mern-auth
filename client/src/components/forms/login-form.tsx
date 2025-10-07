@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import z from "zod";
 import { loginFormSchema } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AuthPages, Routes } from "@/lib/constants";
 
 const LoginForm = () => {
   const form = useForm<z.infer<typeof loginFormSchema>>({
@@ -75,14 +76,14 @@ const LoginForm = () => {
               <div className="flex items-center">
                 <FormLabel htmlFor="password">Password</FormLabel>
                 <Link
-                  href="#"
+                  href={`/${Routes.AUTH}/${AuthPages.FORGOT_PASSWORD}`}
                   className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                 >
                   Forgot your password?
                 </Link>
               </div>
               <FormControl>
-                <PasswordInput id="password" {...field} />
+                <PasswordInput id="password" placeholder="********" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -106,7 +107,7 @@ const LoginForm = () => {
 
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/register" className="underline underline-offset-4">
+          <Link href={`/${Routes.AUTH}/${AuthPages.REGISTER}`} className="underline underline-offset-4">
             Sign up
           </Link>
         </div>
