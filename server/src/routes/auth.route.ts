@@ -3,7 +3,9 @@ import {
   forgotPasswordController,
   registerController,
   resendEmailVerificationController,
+  resetPasswordController,
   verifyEmailControler,
+  verifyResetPasswordTokenController,
 } from "../controllers/auth.controller";
 import {
   validateBody,
@@ -12,6 +14,7 @@ import {
 import {
   forgotPasswordSchema,
   registerSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
 } from "../utils/schemas/auth.schema";
 
@@ -40,5 +43,15 @@ router
 router
   .route("/forgot-password")
   .post(validateBody(forgotPasswordSchema), forgotPasswordController);
+
+// ~/api/auth/reset-password/:token
+router
+  .route("/reset-password/:token")
+  .post(validateBody(resetPasswordSchema), resetPasswordController);
+
+// ~/api/auth/verify-reset-password-token/:token
+router
+  .route("/verify-reset-password-token/:token")
+  .get(verifyResetPasswordTokenController);
 
 export default router;

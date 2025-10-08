@@ -4,6 +4,7 @@ import z from "zod";
 import {
   forgotPasswordFormSchema,
   registerFormSchema,
+  resetPasswordFormSchema,
   verifyEmailFormSchema,
 } from "@/lib/schemas/auth.schema";
 import api from "@/lib/axios";
@@ -127,6 +128,62 @@ export const forgotPasswordAction = async (
     return {
       success: false,
       message: "Something sent wrong. Please try again.",
+    };
+  }
+};
+
+export const resetPasswordAction = async (
+  data: z.infer<typeof resetPasswordFormSchema>,
+  token: string
+): Promise<ActionResponseType> => {
+  try {
+    const response = await api.post(`/auth/reset-password/${token}`, {
+      newPassword: data.password,
+    });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.data.message,
+      };
+    }
+
+    return {
+      success: true,
+      message: response.data.message,
+      redirectTo: `/${Routes.AUTH}/${AuthPages.LOGIN}`,
+    };
+  } catch (error) {
+    console.log("Reset Password Action Error:");
+    console.log(error);
+    return {
+      success: false,
+      message: "Something went wrong. Please try again.",
+    };
+  }
+};
+
+export const verifyResetPasswordTokenAction = async (
+  token: string
+): Promise<{
+  isVerified: boolean;
+  isExpired: boolean;
+}> => {
+  try {
+    const response = await api.get(
+      `/auth/verify-reset-password-token/${token}`
+    );
+
+    return {
+      isVerified: response.data.isVerified,
+      isExpired: response.data.isExpired,
+    };
+  } catch (error) {
+    console.log("Verify Reset Password Token Action:");
+    console.log(error);
+    return {
+      isVerified: false,
+      isExpired: false,
     };
   }
 };

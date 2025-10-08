@@ -185,3 +185,121 @@ export const forgotPasswordController = async (
     next(error);
   }
 };
+
+/**----------------------------------------
+ * @desc Reset Password
+ * @route /api/auth/reset-password/:token
+ * @method POST
+ * @access public  
+ -----------------------------------------*/
+export const resetPasswordController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { newPassword } = req.body;
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "No token provided.",
+      });
+      return;
+    }
+
+    const user = await User.findOne({ resetPasswordToken: token });
+
+    if (!user || !user.resetPasswordTokenExpiredAt) {
+      res.status(HttpStatusCode.NOT_FOUND).json({
+        message: "Invalid token.",
+      });
+      return;
+    }
+
+    const isExpired: boolean =
+      new Date(Date.now()) > new Date(user.resetPasswordTokenExpiredAt);
+
+    if (isExpired) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "Your token is expired. Request a new link.",
+      });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await updateUserService(user._id as Types.ObjectId, {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordTokenExpiredAt: null,
+    });
+
+    res.status(HttpStatusCode.OK).json({
+      message: "Your password is updated successfully. Please login.",
+    });
+  } catch (error) {
+    console.log("Reset Password Controller Error:");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Verify Reset Password Token
+ * @route /api/auth/verify-reset-password-token/:token
+ * @method GET
+ * @access public  
+ -----------------------------------------*/
+export const verifyResetPasswordTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        isVerified: false,
+        isExpired: false,
+        message: "No token provided.",
+      });
+      return;
+    }
+
+    const user = await User.findOne({ resetPasswordToken: token });
+
+    if (!user || !user.resetPasswordTokenExpiredAt) {
+      res.status(HttpStatusCode.NOT_FOUND).json({
+        isVerified: false,
+        isExpired: false,
+        message: "Invalid token.",
+      });
+      return;
+    }
+
+    const isExpired: boolean =
+      new Date(Date.now()) > new Date(user.resetPasswordTokenExpiredAt);
+
+    if (isExpired) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        isVerified: true,
+        isExpired: true,
+        message: "Token expired.",
+      });
+      return;
+    }
+
+    res.status(HttpStatusCode.OK).json({
+      isVerified: true,
+      isExpired: false,
+      message: "Token verified.",
+    });
+  } catch (error) {
+    console.log("Verify Reset Password Token Error :");
+    console.log(error);
+    next(error);
+  }
+};

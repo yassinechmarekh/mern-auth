@@ -16,8 +16,14 @@ import { toast } from "sonner";
 import z from "zod";
 import { resetPasswordFormSchema } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordAction } from "@/actions/auth.action";
+import { useRouter } from "next/navigation";
 
-const ResetPasswordForm = () => {
+interface ResetPasswordFormProps {
+  token: string;
+}
+
+const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
   const form = useForm<z.infer<typeof resetPasswordFormSchema>>({
     resolver: zodResolver(resetPasswordFormSchema),
     defaultValues: {
@@ -28,12 +34,25 @@ const ResetPasswordForm = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const resetPasswordHandler = (
+  const router = useRouter();
+
+  const resetPasswordHandler = async (
     data: z.infer<typeof resetPasswordFormSchema>
   ) => {
     try {
       setIsLoading(true);
-      console.log(data);
+      const result = await resetPasswordAction(data, token);
+
+      if (result.success) {
+        if (result.redirectTo) {
+          router.push(result.redirectTo);
+        }
+        toast.success(result.message);
+        return;
+      } else {
+        toast.error(result.message);
+        return;
+      }
     } catch (error) {
       console.log("Reset Password Handler Error:");
       console.log(error);

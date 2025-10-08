@@ -19,3 +19,7 @@ export const verifyEmailSchema = z.object({
 export const forgotPasswordSchema = z.object({
   email: z.string().nonempty().email(),
 });
+
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().nonempty().min(8),
+});

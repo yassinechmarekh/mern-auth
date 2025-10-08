@@ -11,8 +11,8 @@ export interface IUser extends Document {
   otpCode?: string;
   otpExpiredAt?: Date;
   isVerified: boolean;
-  resetPasswordToken?: string;
-  resetPasswordTokenExpiredAt?: Date;
+  resetPasswordToken?: string | null;
+  resetPasswordTokenExpiredAt?: Date | null;
   createdAt: Date;
   updateAt: Date;
 }
