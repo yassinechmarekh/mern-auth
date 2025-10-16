@@ -322,7 +322,7 @@ export const loginController = async (
 
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user || !user.password) {
       res
         .status(HttpStatusCode.NOT_FOUND)
         .json({ message: "Invalid email or password" });
