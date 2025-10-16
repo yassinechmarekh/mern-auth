@@ -21,6 +21,7 @@ import { registerFormSchema } from "@/lib/schemas/auth.schema";
 import { registerAction } from "@/actions/auth.action";
 import { useRouter } from "next/navigation";
 import { ActionResponseType } from "@/types";
+import GoogleAuthBtn from "../google-auth-btn";
 
 const RegisterForm = () => {
   const form = useForm<z.infer<typeof registerFormSchema>>({
@@ -150,9 +151,7 @@ const RegisterForm = () => {
           >
             {isLoading ? "Loading ..." : "Register"}
           </Button>
-          <Button variant="outline" className="w-full">
-            Continue with Google
-          </Button>
+          <GoogleAuthBtn />
         </div>
 
         <div className="mt-4 text-center text-sm">

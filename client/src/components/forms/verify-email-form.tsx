@@ -18,8 +18,7 @@ import { verifyEmailFormSchema } from "@/lib/schemas/auth.schema";
 import { Button } from "../ui/button";
 import { verifyEmailAction } from "@/actions/auth.action";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Terminal } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface VerifyEmailFormProps {
   userId: string;

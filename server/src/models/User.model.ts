@@ -4,6 +4,8 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
+  provider: string;
+  googleId: string;
   profileImage?: {
     url: string;
     publicId: string;
@@ -30,7 +32,18 @@ const UserSchema: Schema = new Schema<IUser>(
     },
     password: {
       type: String,
-      require: true,
+      required: function () {
+        return this.provider === "local";
+      },
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: {
+      type: String,
+      sparse: true,
     },
     profileImage: {
       url: {

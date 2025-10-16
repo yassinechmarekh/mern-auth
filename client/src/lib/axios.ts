@@ -34,10 +34,10 @@ api.interceptors.request.use(
 let isRefreshing = false; // This variable prevents multiple simultaneous calls to refresh-token.
 let failedQueue: {
   resolve: (value?: unknown) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }[] = []; // This is a queue of all requests that failed while refresh-token was in progress.
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);

@@ -22,7 +22,7 @@ const VerifyEmailRoute = ({userId}: VerifyEmailRouteProps) => {
           <CardHeader>
             <CardTitle>Verify Your Email</CardTitle>
             <CardDescription>
-              We've sent a 6-digit verification code to{" "}
+              We&apos;ve sent a 6-digit verification code to{" "}
               <span className="font-medium text-slate-800">your email</span>.
               Enter the code below to verify your account.
             </CardDescription>

@@ -19,11 +19,11 @@ import z from "zod";
 import { loginFormSchema } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthPages, CookieKeys, HttpStatusCode, Routes } from "@/lib/constants";
-import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { useAuth } from "@/context/auth-context";
+import GoogleAuthBtn from "../google-auth-btn";
 
 const LoginForm = () => {
   const form = useForm<z.infer<typeof loginFormSchema>>({
@@ -45,9 +45,10 @@ const LoginForm = () => {
       setIsLoading(true);
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        data, {
-          validateStatus: () =>true,
-          withCredentials: true
+        data,
+        {
+          validateStatus: () => true,
+          withCredentials: true,
         }
       );
 
@@ -137,9 +138,7 @@ const LoginForm = () => {
           >
             {isLoading ? "Loading ..." : "Login"}
           </Button>
-          <Button variant="outline" className="w-full">
-            Login with Google
-          </Button>
+          <GoogleAuthBtn />
         </div>
 
         <div className="mt-4 text-center text-sm">

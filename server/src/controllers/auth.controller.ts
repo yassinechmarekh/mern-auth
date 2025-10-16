@@ -549,3 +549,44 @@ export const verifyAccessTokenController = async (
     });
   }
 };
+
+/**----------------------------------------
+ * @desc Google callback
+ * @route /api/auth/google/callback
+ * @method GET
+ * @access public  
+ -----------------------------------------*/
+export const googleCallbackController = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      res.status(HttpStatusCode.NOT_FOUND).json({
+        message: "No user from Google strategy",
+      });
+      return;
+    }
+
+    const accessToken = generateAccessToken(user._id as Types.ObjectId);
+    const refreshToken = generateRefreshToken(user._id as Types.ObjectId);
+
+    res
+      .cookie(CookieKeys.REFRESH_TOKEN, refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .redirect(
+        `${process.env.CLIENT_DOMAIN}/auth/success?token=${accessToken}`
+      );
+  } catch (error) {
+    console.log("Google Callback Controller Error :");
+    console.log(error);
+    next(error);
+  }
+};

@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import { xssSanitizer } from "./middlewares/xss.middleware";
 import mongoSanitize from "express-mongo-sanitize";
 import routes from "./routes/index.route";
+import passport from "./config/passport";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use(
   })
 );
 app.use(cors(corsOptions));
+app.use(passport.initialize());
 
 app.post("/test/:name", (req, res, next) => {
   console.log("Body :", req.body);

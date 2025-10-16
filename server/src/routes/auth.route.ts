@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   forgotPasswordController,
   getProfileDataController,
+  googleCallbackController,
   loginController,
   logoutController,
   refreshTokenController,
@@ -24,6 +25,7 @@ import {
   verifyEmailSchema,
 } from "../utils/schemas/auth.schema";
 import { isAuthenticated } from "../middlewares/auth.middleware";
+import passport from "../config/passport";
 
 const router = Router();
 
@@ -75,5 +77,27 @@ router.route("/refresh").get(refreshTokenController);
 
 // ~/api/auth/verify-token
 router.route("/verify-token").get(verifyAccessTokenController);
+
+// ~/api/auth/google
+router.route("/google").get(
+  passport.authenticate("google", {
+    scope: ["email", "profile"],
+    session: false,
+  })
+);
+
+// ~/api/auth/google/callback
+router.route("/google/callback").get(
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/auth/google/failure",
+  }),
+  googleCallbackController
+);
+
+// ~/api/auth/google/failure
+router.route("/google/failure").get((req, res) => {
+  res.status(401).json({ message: "Google authentication failed" });
+});
 
 export default router;

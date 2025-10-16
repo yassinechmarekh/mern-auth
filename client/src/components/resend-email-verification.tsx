@@ -74,7 +74,7 @@ const ResendEmailVerification = ({ userId }: ResendEmailVerificationProps) => {
     </p>
   ) : (
     <p className="text-center text-sm">
-      Didn't receive the code?{" "}
+      Didn&apos;t receive the code?{" "}
       <Button
         variant={"link"}
         className="font-medium px-0 cursor-pointer"
