@@ -18,7 +18,12 @@ import { toast } from "sonner";
 import z from "zod";
 import { loginFormSchema } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AuthPages, Routes } from "@/lib/constants";
+import { AuthPages, CookieKeys, HttpStatusCode, Routes } from "@/lib/constants";
+import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import axios from "axios";
+import { useAuth } from "@/context/auth-context";
 
 const LoginForm = () => {
   const form = useForm<z.infer<typeof loginFormSchema>>({
@@ -31,10 +36,38 @@ const LoginForm = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const loginHandler = (data: z.infer<typeof loginFormSchema>) => {
+  const router = useRouter();
+
+  const { fetchUser } = useAuth();
+
+  const loginHandler = async (data: z.infer<typeof loginFormSchema>) => {
     try {
       setIsLoading(true);
-      console.log(data);
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        data, {
+          validateStatus: () =>true,
+          withCredentials: true
+        }
+      );
+
+      if (result.status !== HttpStatusCode.OK) {
+        toast.error(result.data.message);
+        return;
+      }
+
+      const accessToken = result.data.accessToken;
+      if (!accessToken) {
+        toast.error("Token not received from server.");
+        return;
+      }
+      Cookies.set(CookieKeys.ACCESSTOKEN, accessToken, {
+        expires: new Date(Date.now() + 15 * 60 * 1000),
+      });
+
+      await fetchUser();
+
+      router.replace(`/${Routes.DASHBOARD}`);
     } catch (error) {
       console.log("Login Hanlder Error:");
       console.log(error);
@@ -83,7 +116,11 @@ const LoginForm = () => {
                 </Link>
               </div>
               <FormControl>
-                <PasswordInput id="password" placeholder="********" {...field} />
+                <PasswordInput
+                  id="password"
+                  placeholder="********"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -107,7 +144,10 @@ const LoginForm = () => {
 
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link href={`/${Routes.AUTH}/${AuthPages.REGISTER}`} className="underline underline-offset-4">
+          <Link
+            href={`/${Routes.AUTH}/${AuthPages.REGISTER}`}
+            className="underline underline-offset-4"
+          >
             Sign up
           </Link>
         </div>

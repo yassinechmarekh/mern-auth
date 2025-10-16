@@ -19,8 +19,8 @@ import { PasswordInput } from "../ui/password-input";
 import { Button } from "../ui/button";
 import { registerFormSchema } from "@/lib/schemas/auth.schema";
 import { registerAction } from "@/actions/auth.action";
-import { ActionResponseType } from "../../../types";
 import { useRouter } from "next/navigation";
+import { ActionResponseType } from "@/types";
 
 const RegisterForm = () => {
   const form = useForm<z.infer<typeof registerFormSchema>>({

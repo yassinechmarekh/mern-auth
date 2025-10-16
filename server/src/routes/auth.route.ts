@@ -1,9 +1,14 @@
 import { Router } from "express";
 import {
   forgotPasswordController,
+  getProfileDataController,
+  loginController,
+  logoutController,
+  refreshTokenController,
   registerController,
   resendEmailVerificationController,
   resetPasswordController,
+  verifyAccessTokenController,
   verifyEmailControler,
   verifyResetPasswordTokenController,
 } from "../controllers/auth.controller";
@@ -13,10 +18,12 @@ import {
 } from "../middlewares/validation.middleware";
 import {
   forgotPasswordSchema,
+  loginSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
 } from "../utils/schemas/auth.schema";
+import { isAuthenticated } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -53,5 +60,20 @@ router
 router
   .route("/verify-reset-password-token/:token")
   .get(verifyResetPasswordTokenController);
+
+// ~/api/auth/login
+router.route("/login").post(validateBody(loginSchema), loginController);
+
+// ~/api/auth/profile-data
+router.route("/profile-data").get(isAuthenticated, getProfileDataController);
+
+// ~/api/auth/logout
+router.route("/logout").get(logoutController);
+
+// ~/api/auth/refresh
+router.route("/refresh").get(refreshTokenController);
+
+// ~/api/auth/verify-token
+router.route("/verify-token").get(verifyAccessTokenController);
 
 export default router;

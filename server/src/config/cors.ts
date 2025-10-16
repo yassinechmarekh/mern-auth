@@ -1,4 +1,4 @@
 export const corsOptions = {
-  origin: [`${process.env.CLEINT_DOMAIN}`],
+  origin: [`${process.env.CLIENT_DOMAIN}`],
   credentials: true,
 };

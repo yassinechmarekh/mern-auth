@@ -23,3 +23,8 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z.object({
   newPassword: z.string().nonempty().min(8),
 });
+
+export const loginSchema = z.object({
+  email: z.string().nonempty().email(),
+  password: z.string().nonempty().min(8),
+});

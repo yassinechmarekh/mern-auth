@@ -1,14 +1,16 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response, response } from "express";
 import User, { IUser } from "../models/User.model";
-import { HttpStatusCode } from "../utils/constant";
+import { CookieKeys, Environment, HttpStatusCode } from "../utils/constant";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { sendEmailVerification, sendResetPasswordEmail } from "../utils/mail";
 import { Types } from "mongoose";
 import {
   getUserByIdService,
   updateUserService,
 } from "../services/user.service";
+import { generateAccessToken, generateRefreshToken } from "../utils/token";
+import jwt from "jsonwebtoken";
+import { TokenPayloadType } from "../types";
 
 /**----------------------------------------
  * @desc Register new user
@@ -301,5 +303,249 @@ export const verifyResetPasswordTokenController = async (
     console.log("Verify Reset Password Token Error :");
     console.log(error);
     next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Login
+ * @route /api/auth/login
+ * @method POST
+ * @access public  
+ -----------------------------------------*/
+export const loginController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res
+        .status(HttpStatusCode.NOT_FOUND)
+        .json({ message: "Invalid email or password" });
+      return;
+    }
+
+    if (!user.isVerified) {
+      await sendEmailVerification(user._id as Types.ObjectId);
+      res.status(HttpStatusCode.FORBIDDEN).json({
+        message:
+          "You need to verify your account. We send an email verification, please check your inbox.",
+      });
+      return;
+    }
+
+    const passwordsMatch: boolean = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!passwordsMatch) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "Invalid email or password",
+      });
+      return;
+    }
+
+    const accessToken = generateAccessToken(user._id as Types.ObjectId);
+    const refreshToken = generateRefreshToken(user._id as Types.ObjectId);
+
+    res
+      .cookie(CookieKeys.REFRESH_TOKEN, refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .status(HttpStatusCode.OK)
+      .json({
+        accessToken,
+      });
+  } catch (error) {
+    console.log("Login Controller Error :");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Get profile data logeddin
+ * @route /api/auth/profile-data
+ * @method GET
+ * @access private  
+ -----------------------------------------*/
+export const getProfileDataController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "Not authenticated.",
+      });
+      return;
+    }
+
+    res.status(HttpStatusCode.OK).json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage?.url,
+      },
+    });
+  } catch (error) {
+    console.log("Get Profile Data Controller Error :");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Logout
+ * @route /api/auth/logout
+ * @method GET
+ * @access private  
+ -----------------------------------------*/
+export const logoutController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const cookies = req.cookies;
+
+    if (!cookies[CookieKeys.REFRESH_TOKEN]) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "No token provided.",
+      });
+      return;
+    }
+
+    res
+      .clearCookie(CookieKeys.REFRESH_TOKEN, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      })
+      .status(HttpStatusCode.OK)
+      .json({
+        message: "Your are logout.",
+      });
+  } catch (error) {
+    console.log("Logout Controller Error :");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Refresh Token
+ * @route /api/auth/refresh
+ * @method GET
+ * @access public  
+ -----------------------------------------*/
+export const refreshTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const cookies = req.cookies;
+    const refreshToken = cookies[CookieKeys.REFRESH_TOKEN];
+
+    if (!refreshToken) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        message: "Missing refresh token. Please login.",
+      });
+      return;
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET_KEY as string
+    ) as TokenPayloadType;
+
+    if (!decoded || !decoded.userId) {
+      res.status(HttpStatusCode.UNAUTHORIZED).json({
+        message: "Invalid refresh token.",
+      });
+      return;
+    }
+
+    const user = await getUserByIdService(decoded.userId);
+
+    const newAccessToken = generateAccessToken(user._id as Types.ObjectId);
+
+    res.status(HttpStatusCode.OK).json({
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    console.log("Refresh Token Controller Error :");
+    console.log(error);
+    next(error);
+  }
+};
+
+/**----------------------------------------
+ * @desc Verify Access Token (is authenticated ?)
+ * @route /api/auth/verify-token
+ * @method GET
+ * @access public  
+ -----------------------------------------*/
+export const verifyAccessTokenController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        isAuthenticated: false,
+      });
+      return;
+    }
+
+    const accessToken = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+
+    if (!accessToken) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        isAuthenticated: false,
+      });
+      return;
+    }
+
+    jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET_KEY as string,
+      (err, decoded) => {
+        if (err || !decoded) {
+          res.status(HttpStatusCode.UNAUTHORIZED).json({
+            isAuthenticated: false,
+          });
+          return;
+        }
+
+        res.status(HttpStatusCode.OK).json({
+          isAuthenticated: true,
+        });
+        return;
+      }
+    );
+  } catch (error) {
+    console.log("Verify Access Token Controller Error :");
+    console.log(error);
+    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+      isAuthenticated: false,
+    });
   }
 };

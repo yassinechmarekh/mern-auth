@@ -13,3 +13,7 @@ export const enum Environment {
   DEVELOPMENT = "development",
   TEST = "test",
 }
+
+export const enum CookieKeys {
+  REFRESH_TOKEN = "refreshToken"
+}

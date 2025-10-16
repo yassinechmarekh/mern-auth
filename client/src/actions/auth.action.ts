@@ -8,8 +8,9 @@ import {
   verifyEmailFormSchema,
 } from "@/lib/schemas/auth.schema";
 import api from "@/lib/axios";
-import { AuthPages, HttpStatusCode, Routes } from "@/lib/constants";
-import { ActionResponseType } from "../../types";
+import { AuthPages, CookieKeys, HttpStatusCode, Routes } from "@/lib/constants";
+import { ActionResponseType, UserType } from "@/types";
+import { cookies } from "next/headers";
 
 export const registerAction = async (
   data: z.infer<typeof registerFormSchema>
@@ -185,5 +186,44 @@ export const verifyResetPasswordTokenAction = async (
       isVerified: false,
       isExpired: false,
     };
+  }
+};
+
+export const getProfileDataAction = async (): Promise<UserType | null> => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(CookieKeys.ACCESSTOKEN)?.value;
+
+    if (!token) {
+      return null;
+    }
+
+    const response = await api.get(`/auth/profile-data`);
+
+    if (response.status !== HttpStatusCode.OK) {
+      return null;
+    }
+
+    return response.data.user;
+  } catch (error) {
+    console.log("Get Profile Data Action Error :");
+    console.log(error);
+    return null;
+  }
+};
+
+export const isLoggedinAction = async (): Promise<boolean> => {
+  try {
+    const response = await api.get(`/auth/verify-token`);
+
+    if(response.status !== 200) {
+      return false;
+    }
+
+    return response.data.isAuthenticated;
+  } catch (error) {
+    console.log("Is Loggedin Action Error :");
+    console.log(error);
+    return false;
   }
 };
