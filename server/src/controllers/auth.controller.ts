@@ -1,6 +1,11 @@
 import { NextFunction, Request, Response, response } from "express";
 import User, { IUser } from "../models/User.model";
-import { CookieKeys, Environment, HttpStatusCode } from "../utils/constant";
+import {
+  AuthProviders,
+  CookieKeys,
+  Environment,
+  HttpStatusCode,
+} from "../utils/constant";
 import bcrypt from "bcrypt";
 import { sendEmailVerification, sendResetPasswordEmail } from "../utils/mail";
 import { Types } from "mongoose";
@@ -44,6 +49,7 @@ export const registerController = async (
       username,
       email,
       password: hashedPassword,
+      providers: [AuthProviders.LOCAL],
     });
 
     // send otp code to verify email

@@ -5,6 +5,7 @@ import {
   VerifyCallback,
 } from "passport-google-oauth20";
 import User from "../models/User.model";
+import { AuthProviders } from "../utils/constant";
 
 passport.use(
   new GoogleStrategy(
@@ -42,7 +43,7 @@ passport.use(
               existingUser.profileImage.url = profile.photos[0].value;
             }
           }
-          existingUser.provider = "google";
+          existingUser.providers.push(AuthProviders.GOOGLE);
           existingUser.isVerified = true;
 
           await existingUser.save();
@@ -54,10 +55,10 @@ passport.use(
           googleId: profile.id,
           email: profile.emails[0].value,
           username: profile.displayName,
-            profileImage: {
-              url: profile.photos ? profile.photos[0]?.value : null,
-            },
-          provider: "google",
+          profileImage: {
+            url: profile.photos ? profile.photos[0]?.value : null,
+          },
+          providers: [AuthProviders.GOOGLE],
           isVerified: true,
         });
 

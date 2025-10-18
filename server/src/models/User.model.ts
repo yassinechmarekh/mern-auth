@@ -1,10 +1,11 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { AuthProviders } from "../utils/constant";
 
 export interface IUser extends Document {
   username: string;
   email: string;
-  password: string;
-  provider: string;
+  password?: string;
+  providers: (AuthProviders.LOCAL | AuthProviders.GOOGLE)[];
   googleId: string;
   profileImage?: {
     url: string;
@@ -16,34 +17,36 @@ export interface IUser extends Document {
   resetPasswordToken?: string | null;
   resetPasswordTokenExpiredAt?: Date | null;
   createdAt: Date;
-  updateAt: Date;
+  updatedAt: Date;
 }
 
 const UserSchema: Schema = new Schema<IUser>(
   {
     username: {
       type: String,
-      require: true,
+      required: true,
     },
     email: {
       type: String,
-      require: true,
+      required: true,
       unique: true,
     },
     password: {
       type: String,
-      required: function () {
-        return this.provider === "local";
+      required: function (this: IUser) {
+        return this.providers.includes(AuthProviders.LOCAL);
       },
     },
-    provider: {
-      type: String,
-      enum: ["local", "google"],
-      default: "local",
+    providers: {
+      type: [String],
+      enum: [AuthProviders.LOCAL, AuthProviders.GOOGLE],
     },
     googleId: {
       type: String,
       sparse: true,
+      required: function (this: IUser) {
+        return this.providers.includes(AuthProviders.GOOGLE);
+      },
     },
     profileImage: {
       url: {

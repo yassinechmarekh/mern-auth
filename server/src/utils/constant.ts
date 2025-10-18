@@ -15,5 +15,10 @@ export const enum Environment {
 }
 
 export const enum CookieKeys {
-  REFRESH_TOKEN = "refreshToken"
+  REFRESH_TOKEN = "refreshToken",
+}
+
+export const enum AuthProviders {
+  LOCAL = "local",
+  GOOGLE = "google",
 }
